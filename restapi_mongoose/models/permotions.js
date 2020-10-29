@@ -35,7 +35,7 @@ const promo_schema=new Schema({
   timestamps: true
 });
 
-var promo_Dish= mongoose.model('permotion_database', promo_schema);
+var promo_Dish= mongoose.model('permo_database', promo_schema);
 module.exports=promo_Dish;
 // exports.genreSchema = genreSchema
 
