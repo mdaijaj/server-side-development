@@ -3,11 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var session= require('express-session');
+var session= require('express-session'); // use of session
 var FileStore= require('session-file-store')(session);
-var passport = require('passport');
 
-var authenticate = require('./authenticate');
 var Dishes= require('./models/dishes')
 // app.use('/', Dishes);
 
@@ -28,66 +26,14 @@ connect.then(()=>{
 
 var app = express();
 
-// Require static assets from pu  blic folder
-// app.use(express.static(path.join(__dirname, 'public')));
-
-// Set 'views' directory for any views 
-// view engine setup
-
 app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'jade');
+app.set('view engine', 'jade');
 
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-
-//use of passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// app.use(cookieParser()); //basic authentication.....
-
-// app.use(cookieParser('12345-67890-09876-54321'));  // cookies authentication
-app.use(session({
-  name: 'session_id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
-
-
+// app.use(cookieParser('12345-67890-09876-54321'));     //use of cookies
 app.use(express.static(path.join(__dirname, 'public')));
-
-
-// // use of basic authentication
-// function auth(req, res, next){
-//   console.log("headers:--",req.headers);
-//   var authHeader=req.headers.authorization;
-//   if(!authHeader){
-//     var err= new Error("you are not authenticated")
-//     res.setHeader('WWW-Authenticate', 'Basic');
-//     err.status=401;
-//     next(err);
-//     return;
-//   }
-//   var auth= new Buffer.from(authHeader.split(' ')[1],'base64').toString().split(':');
-//   console.log("auth:-", auth)
-//   var user=auth[0];
-//   var password=auth[1];
-//   if(user=="aijaj" && password=="aijaj123"){
-//     console.log("authorized successfully!")
-//     next();
-//   }
-//   else{
-//     var err= new Error("you are not authenticated")
-//     res.setHeader('WWW-Authenticate', 'Basic');
-//     err.status=401;
-//     next(err);
-//   }
-// }
-// app.use(auth);
 
 
 // // use of cookies and if use of cookies if you heet one time then store coookies in headers and save
@@ -96,6 +42,7 @@ app.use(express.static(path.join(__dirname, 'public')));
   
 //   if(!req.signedCookies.user){
 //     var authHeader=req.headers.authorization;
+//     console.log("authHeader:-", authHeader)
 //     if(!authHeader){
 //       var err= new Error("you are not authenticated")
 //       res.setHeader('WWW-Authenticate', 'Basic');
@@ -130,10 +77,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 //   }
 // }
 
-// app.use(auth);
+// use of session and if use of cookies if you heet one time then store session in headers and save
 
+app.use(session({
+  name: 'session_id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+}));
 
-// // use of session and if use of cookies if you heet one time then store session in headers and save
 // function auth(req, res, next){
 //   console.log("headers:--", req.session)
   
@@ -172,64 +125,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 //     }
 //   }
 // }
-  
-// app.use(auth);
 
+// part 2
+app.use('/users', usersRouter);
 
-// use of session and logout and login page.
+function auth (req, res, next) {
+    console.log(req.session);
 
-// app.use('/', indexRouter)
-app.use('/users', usersRouter)
-
-function auth(req, res, next){
-  console.log("headers:--", req.session)
-  
-  if(!req.session.user){
-      var err= new Error("you are not authenticated")
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status=401;
+  if(!req.session.user) {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
       return next(err);
   }
-  else{
-    if(req.session.user==="authenticated"){
+  else {
+    if (req.session.user === 'authenticated') {
       next();
-    }else{
-      var err= new Error("you are not authenticated")
-      err.status=403;
+    }
+    else {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
       return next(err);
     }
   }
 }
-  
-
-//use of passport
-function auth (req, res, next) {
-  console.log(req.user);
-
-  if (!req.user) {
-    var err = new Error('You are not authenticated!');
-    err.status = 403;
-    next(err);
-  }
-  else {
-       next();
-  }
-}
-
-app.use(auth);
-
+app.use(auth)
 
 app.use('/', dishRouter)
 app.use('/', promoRouter)
 app.use('/', leaderRouter)
-
-
-
-
-// catch 404 and forward to error handler
-app.use((req, res, next)=> {
-  next(createError(404));
-});
 
 const port=6000;
 app.listen(port,()=>{
@@ -237,5 +160,4 @@ app.listen(port,()=>{
 })
 
 module.exports = app;
-
 
